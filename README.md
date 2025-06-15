@@ -31,7 +31,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that pr
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12.3 (or compatible version)
+- [uv](https://docs.astral.sh/uv/) package manager
 - A Breathe HR account with API access
 - Breathe HR API key (obtainable from your Breathe HR settings)
 
@@ -43,9 +44,9 @@ git clone https://github.com/fuzzylabs/breathe-hr-mcp.git
 cd breathe-hr-mcp
 ```
 
-2. Install dependencies:
+2. Install dependencies using uv:
 ```bash
-pip install -e .
+uv sync
 ```
 
 3. Set up environment variables:
@@ -160,37 +161,53 @@ Once configured, you can use natural language to interact with your Breathe HR d
 ### Running Locally
 
 ```bash
-# Install development dependencies
-pip install -e ".[dev]"
+# Install dependencies (including dev dependencies)
+uv sync
 
 # Run the server
-python -m breathe_hr_mcp
+uv run python -m breathe_hr_mcp
 
 # Or run with uvicorn for development
-uvicorn breathe_hr_mcp:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn breathe_hr_mcp:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Testing
 
 ```bash
 # Run tests
-pytest
+uv run pytest
 
-# Run tests with coverage
-pytest --cov=breathe_hr_mcp
+# Run tests with coverage (install coverage first)
+uv add --dev pytest-cov
+uv run pytest --cov=breathe_hr_mcp
 
 # Run linting
-ruff check .
-black --check .
-isort --check-only .
+uv run ruff check .
+uv run black --check .
+uv run isort --check-only .
 ```
 
 ### Code Formatting
 
 ```bash
 # Format code
-black .
-isort .
+uv run black .
+uv run isort .
+```
+
+### Utility Scripts
+
+The project includes several utility scripts in the `scripts/` directory:
+
+```bash
+# Print MCP routes and tools info
+uv run python scripts/print_mcp_routes.py
+
+# Validate configuration files
+uv run python scripts/validate-configs.py
+
+# Generate Cursor IDE configuration
+node scripts/generate-cursor-link.js
 ```
 
 ## Deployment
@@ -211,10 +228,12 @@ The `render.yaml` file is included for easy deployment configuration.
 
 This server can be deployed to any platform that supports Python web applications:
 
-- **Heroku**: Use the included `requirements.txt`
-- **Railway**: Works out of the box
-- **Google Cloud Run**: Deploy as a container
-- **AWS Lambda**: Use with a serverless adapter
+- **Heroku**: Use the included `requirements.txt` for pip-based deployment
+- **Railway**: Use `uv sync` in build command or fallback to `requirements.txt`
+- **Google Cloud Run**: Deploy as a container with uv
+- **AWS Lambda**: Use with a serverless adapter and `requirements.txt`
+
+For platforms that don't support `uv`, the project includes a `requirements.txt` file for pip-based installations.
 
 ## API Reference
 
