@@ -11,17 +11,20 @@ from breathe_hr_mcp.server import app, mcp, breathe_hr_request
 class TestBreatheHRRequest:
     """Test the core API request function"""
 
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def mock_env_vars(self):
         """Mock environment variables"""
         with patch.dict("os.environ", {
             "BREATHE_HR_API_KEY": "test_api_key",
             "BREATHE_HR_BASE_URL": "https://api.test-breathehr.com/v1"
         }):
-            yield
+            # Also patch the module-level variables that were loaded at import time
+            with patch("breathe_hr_mcp.server.BREATHE_HR_API_KEY", "test_api_key"):
+                with patch("breathe_hr_mcp.server.BREATHE_HR_BASE_URL", "https://api.test-breathehr.com/v1"):
+                    yield
 
     @pytest.mark.asyncio
-    async def test_successful_request(self, mock_env_vars):
+    async def test_successful_request(self):
         """Test successful API request"""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -45,7 +48,7 @@ class TestBreatheHRRequest:
                 await breathe_hr_request("employees")
 
     @pytest.mark.asyncio
-    async def test_authentication_error(self, mock_env_vars):
+    async def test_authentication_error(self):
         """Test 401 authentication error"""
         mock_response = MagicMock()
         mock_response.status_code = 401
@@ -59,7 +62,7 @@ class TestBreatheHRRequest:
                 await breathe_hr_request("employees")
 
     @pytest.mark.asyncio
-    async def test_forbidden_error(self, mock_env_vars):
+    async def test_forbidden_error(self):
         """Test 403 forbidden error"""
         mock_response = MagicMock()
         mock_response.status_code = 403
@@ -73,7 +76,7 @@ class TestBreatheHRRequest:
                 await breathe_hr_request("employees")
 
     @pytest.mark.asyncio
-    async def test_not_found_error(self, mock_env_vars):
+    async def test_not_found_error(self):
         """Test 404 not found error"""
         mock_response = MagicMock()
         mock_response.status_code = 404
@@ -87,7 +90,7 @@ class TestBreatheHRRequest:
                 await breathe_hr_request("employees/999")
 
     @pytest.mark.asyncio
-    async def test_rate_limit_error(self, mock_env_vars):
+    async def test_rate_limit_error(self):
         """Test 429 rate limit error"""
         mock_response = MagicMock()
         mock_response.status_code = 429
@@ -101,7 +104,7 @@ class TestBreatheHRRequest:
                 await breathe_hr_request("employees")
 
     @pytest.mark.asyncio
-    async def test_invalid_json_response(self, mock_env_vars):
+    async def test_invalid_json_response(self):
         """Test error when response is not valid JSON"""
         mock_response = MagicMock()
         mock_response.status_code = 200
