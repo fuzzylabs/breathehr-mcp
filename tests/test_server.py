@@ -43,7 +43,7 @@ class TestBreatheHRRequest:
     @pytest.mark.asyncio
     async def test_missing_api_key(self):
         """Test error when API key is missing"""
-        with patch.dict("os.environ", {}, clear=True):
+        with patch("breathe_hr_mcp.server.BREATHE_HR_API_KEY", None):
             with pytest.raises(RuntimeError, match="BREATHE_HR_API_KEY environment variable is required"):
                 await breathe_hr_request("employees")
 
