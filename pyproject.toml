@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "breathe-hr-mcp"
+version = "0.1.0"
+description = "Model Context Protocol server for Breathe HR"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Fuzzy Labs", email = "contact@fuzzylabs.ai" }
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.68.0",
+    "fastmcp>=2.2.5",
+    "httpx>=0.25",
+    "pydantic>=2.0",
+    "uvicorn>=0.15.0",
+    "python-dotenv>=0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=22.0",
+    "isort>=5.10",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/fuzzylabs/breathe-hr-mcp"
+Repository = "https://github.com/fuzzylabs/breathe-hr-mcp"
+Issues = "https://github.com/fuzzylabs/breathe-hr-mcp/issues"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+select = ["E", "F", "W", "B", "I", "N", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

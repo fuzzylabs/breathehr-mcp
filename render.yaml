@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: breathe-hr-mcp
+    env: python
+    buildCommand: pip install -e .
+    startCommand: uvicorn breathe_hr_mcp:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: BREATHE_HR_API_KEY
+        sync: false
+      - key: BREATHE_HR_BASE_URL
+        value: https://api.breathehr.com/v1
+      - key: MCP_API_KEY
+        sync: false
