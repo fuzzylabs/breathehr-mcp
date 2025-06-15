@@ -7,16 +7,14 @@ enabling AI assistants to access employee data, absence records, and account inf
 import os
 from typing import Dict, List, Optional, Any
 import httpx
-from fastapi import Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import RedirectResponse
 from fastmcp import FastMCP
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-
-# Initialize MCP server
-mcp = FastMCP("Breathe HR", dependencies=[])
 
 # Configuration
 BREATHE_HR_API_KEY = os.getenv("BREATHE_HR_API_KEY")
@@ -26,19 +24,34 @@ MCP_API_KEY = os.getenv("MCP_API_KEY")
 # Security
 security = HTTPBearer(auto_error=False)
 
-def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify MCP API key for remote deployments"""
-    if MCP_API_KEY and (not credentials or credentials.credentials != MCP_API_KEY):
+async def authenticate_request(request):
+    """Authenticate requests if MCP API key is configured"""
+    if not MCP_API_KEY:
+        return
+    
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
+            detail="Missing or invalid authorization header",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return credentials
+    
+    token = auth_header.split(" ")[1]
+    if token != MCP_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-# Add API key verification to MCP if configured
-if MCP_API_KEY:
-    mcp = FastMCP("Breathe HR", dependencies=[Depends(verify_api_key)])
+# Initialize MCP server
+mcp = FastMCP(
+    name="Breathe HR MCP",
+    auth=None,
+    json_response=True,
+    stateless_http=True,
+)
 
 async def breathe_hr_request(
     endpoint: str,
@@ -290,8 +303,40 @@ async def get_departments() -> Dict[str, Any]:
     """
     return await breathe_hr_request("departments")
 
-# Create FastAPI app
-app = mcp.create_app()
+def create_app():
+    """Create FastAPI app with MCP integration"""
+    # Get the MCP HTTP app
+    mcp_app = mcp.http_app(path="/")
+    
+    # Create main FastAPI app with MCP's lifespan
+    app = FastAPI(lifespan=mcp_app.lifespan, title="Breathe HR MCP Server")
+    
+    # Add authentication middleware if API key is configured
+    if MCP_API_KEY:
+        @app.middleware("http")
+        async def auth_middleware(request: Request, call_next):
+            if request.url.path.startswith("/mcp"):
+                await authenticate_request(request)
+            response = await call_next(request)
+            return response
+    
+    # Mount the MCP app
+    app.mount("/mcp", mcp_app)
+    
+    # Add redirect for /mcp
+    @app.api_route("/mcp", methods=["GET", "POST"])
+    async def mcp_redirect():
+        return RedirectResponse(url="/mcp/", status_code=307)
+    
+    # Add health check endpoint
+    @app.get("/")
+    async def health_check():
+        return {"status": "ok", "service": "Breathe HR MCP Server"}
+    
+    return app
+
+# Create the app
+app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
