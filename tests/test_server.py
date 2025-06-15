@@ -142,10 +142,10 @@ class TestMCPTools:
         }
         mock_breathe_hr_request.return_value = mock_response
 
-        # Import the tool function directly
         from breathe_hr_mcp.server import list_employees
         
-        result = await list_employees()
+        # Get the underlying function from the FunctionTool
+        result = await list_employees.fn()
         
         mock_breathe_hr_request.assert_called_once_with(
             "employees", 
@@ -161,7 +161,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import list_employees
         
-        await list_employees(page=2, per_page=25, department="Engineering", status="active")
+        await list_employees.fn(page=2, per_page=25, department="Engineering", status="active")
         
         mock_breathe_hr_request.assert_called_once_with(
             "employees",
@@ -186,7 +186,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import get_employee
         
-        result = await get_employee(1)
+        result = await get_employee.fn(1)
         
         mock_breathe_hr_request.assert_called_once_with("employees/1")
         assert result == mock_response
@@ -202,7 +202,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import search_employees
         
-        result = await search_employees("John")
+        result = await search_employees.fn("John")
         
         mock_breathe_hr_request.assert_called_once_with(
             "employees/search",
@@ -223,7 +223,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import list_absences
         
-        result = await list_absences(employee_id=1, start_date="2024-01-01")
+        result = await list_absences.fn(employee_id=1, start_date="2024-01-01")
         
         mock_breathe_hr_request.assert_called_once_with(
             "absences",
@@ -250,7 +250,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import create_leave_request
         
-        result = await create_leave_request(
+        result = await create_leave_request.fn(
             employee_id=1,
             start_date="2024-02-01",
             end_date="2024-02-05",
@@ -284,7 +284,7 @@ class TestMCPTools:
 
         from breathe_hr_mcp.server import get_account_info
         
-        result = await get_account_info()
+        result = await get_account_info.fn()
         
         mock_breathe_hr_request.assert_called_once_with("account")
         assert result == mock_response
@@ -304,8 +304,15 @@ class TestFastAPIApp:
 
     def test_mcp_tools_registration(self):
         """Test that MCP tools are properly registered"""
-        # Check that tools are registered with the MCP instance
-        assert hasattr(mcp, '_tools') or hasattr(mcp, 'tools')
+        # Check that we can import the tool functions and they're FunctionTool objects
+        from breathe_hr_mcp.server import list_employees, get_employee, list_absences
+        from fastmcp.tools.tool import FunctionTool
         
-        # This test structure depends on FastMCP's internal API
-        # Adjust based on actual FastMCP implementation
+        assert isinstance(list_employees, FunctionTool)
+        assert isinstance(get_employee, FunctionTool)
+        assert isinstance(list_absences, FunctionTool)
+        
+        # Check that the underlying functions exist
+        assert callable(list_employees.fn)
+        assert callable(get_employee.fn)
+        assert callable(list_absences.fn)
