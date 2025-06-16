@@ -1,233 +1,366 @@
 # Breathe HR MCP Server
 
-![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)
-![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-green)
-![Breathe HR API](https://img.shields.io/badge/Breathe%20HR-API%20v1-orange)
+> **Connect your Breathe HR data to AI assistants** — Access employees, absences, leave requests, and company information through natural language queries, with secure read-write capabilities.
 
-> A Model Context Protocol (MCP) server that gives AI assistants secure access to your Breathe HR data - employees, absences, and company information.
+[![Model Context Protocol](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io) [![Python 3.12+](https://img.shields.io/badge/Python-3.12+-green)](https://python.org) [![Breathe HR API](https://img.shields.io/badge/Breathe%20HR-API%20v1-orange)](https://developers.breathehr.com)
+
+**🚨 Disclaimer**: This project is created by [Fuzzy Labs](https://fuzzylabs.ai) with good vibes and is not officially supported by Breathe HR. Use at your own discretion.
 
 ## What This Does
 
-This MCP server lets your AI assistant (like Claude) directly access your Breathe HR account to:
+Transform how you work with your Breathe HR data by asking AI assistants natural language questions like:
 
-- 👥 **Browse employees** - Get employee lists, search by name/department, view detailed profiles
-- 🏖️ **Manage absences** - Check leave balances, view absence history, submit leave requests
-- 🏢 **Access company data** - View account info, departments, and organizational structure
-- 🔍 **Smart search** - Find employees and data using natural language queries
+- *"Show me all employees in the Engineering department"*
+- *"Who has pending leave requests this month?"*
+- *"Create a holiday request for John Doe from March 1-5"*
+- *"Search for employees named Sarah"*
+- *"What's our current headcount by department?"*
 
-Perfect for HR teams, managers, and anyone who needs quick access to people data through their AI assistant.
+**🔐 Secure Access** — API key authentication with controlled permissions  
+**🚀 Instant Setup** — Works with any MCP-compatible AI assistant  
+**📊 Complete Coverage** — Access employees, absences, departments & more
 
 ## Quick Start
 
 ### 1. Get Your Breathe HR API Key
-
 1. Log into your Breathe HR account
-2. Go to **Settings** → **Integrations** → **API**
-3. Generate a new API key
-4. Copy the key (you'll need it in step 3)
+2. Go to **Settings → Integrations → API**
+3. Create a new API key and copy it
 
 ### 2. Install & Configure
 
+#### macOS Setup
+
 ```bash
+# Install uv (Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Clone and install
 git clone https://github.com/fuzzylabs/breathehr-mcp.git
 cd breathehr-mcp
 uv sync
+```
 
-# Set up your API key
-cp .env.example .env
-# Edit .env and add your Breathe HR API key
+#### Linux/Windows Setup
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/macOS
+# OR for Windows: powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Clone and install
+git clone https://github.com/fuzzylabs/breathehr-mcp.git
+cd breathehr-mcp
+uv sync
 ```
 
 ### 3. Connect to Your AI Assistant
 
-**For Claude Desktop**, add this to your config file:
+#### Claude Desktop
+
+Add this to your Claude Desktop config file:
+
+**Config Location:**
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "breathe-hr": {
       "command": "uv",
-      "args": ["run", "python", "-m", "breathe_hr_mcp"],
+      "args": [
+        "run",
+        "--directory",
+        "/path/to/your/breathehr-mcp",
+        "python",
+        "-m",
+        "breathe_hr_mcp"
+      ],
       "env": {
-        "BREATHE_HR_API_KEY": "your_api_key_here"
+        "BREATHE_HR_API_KEY": "your_breathe_hr_api_key_here"
       }
     }
   }
 }
 ```
 
-**Config file locations:**
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+#### Cursor
 
-**For Cursor**, add this to your settings:
+**📋 Quick Setup:** 
+
+**Copy this Cursor deeplink and paste it in your browser address bar:**
+
+```
+cursor://anysphere.cursor-deeplink/mcp/install?name=breathe-hr&config=eyJicmVhdGhlLWhyIjp7ImNvbW1hbmQiOiJ1diIsImFyZ3MiOlsicnVuIiwiLS1kaXJlY3RvcnkiLCIvcGF0aC90by95b3VyL2JyZWF0aGVoci1tY3AiLCJweXRob24iLCItbSIsImJyZWF0aGVfaHJfbWNwIl0sImVudiI6eyJCUkVBVEhFX0hSX0FQSV9LRVkiOiJ5b3VyX2JyZWF0aGVfaHJfYXBpX2tleV9oZXJlIn19fQ==
+
+**💡 How to use:**
+1. Copy the entire `cursor://` URL above
+2. Paste it into your browser's address bar 
+3. Press Enter - this will open Cursor and prompt to install the MCP server
+
+**Note:** After clicking the button, you'll need to:
+1. Update the path `/path/to/your/breathehr-mcp` to your actual installation directory
+2. Replace `your_breathe_hr_api_key_here` with your actual Breathe HR API key
+
+Or manually add this to your Cursor MCP settings:
 
 ```json
 {
-  "mcp.servers": {
-    "breathe-hr": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "breathe_hr_mcp"],
-      "env": {
-        "BREATHE_HR_API_KEY": "your_api_key_here"
-      }
+  "breathe-hr": {
+    "command": "uv",
+    "args": [
+      "run",
+      "--directory",
+      "/path/to/your/breathehr-mcp",
+      "python",
+      "-m",
+      "breathe_hr_mcp"
+    ],
+    "env": {
+      "BREATHE_HR_API_KEY": "your_breathe_hr_api_key_here"
     }
   }
 }
 ```
 
-### 4. Start Using!
+#### Other MCP Clients
 
-Restart your AI assistant and try asking:
+This server is compatible with any MCP client. Refer to your client's documentation for MCP server configuration.
 
-- *"Show me all employees in the Engineering department"*
-- *"Who has pending leave requests?"*
-- *"Create a holiday request for John Doe from March 1-5"*
-- *"Search for employees named Sarah"*
-- *"What's our current employee count?"*
+**💡 Setup Help:**
+- **Using uv (recommended):** Use `uv run` command as shown above - no Python path needed!
+- **uv path for Claude Desktop:** Use full path `~/.local/bin/uv` (find yours with `which uv`)
+- **Manual Python paths (if not using uv):**
+  - **macOS (Homebrew):** `/opt/homebrew/bin/python3` (Apple Silicon) or `/usr/local/bin/python3` (Intel)
+  - **macOS (System):** `/usr/bin/python3` (if available)
+  - **Find your Python:** Run `which python3` in terminal
+  - **Windows:** Try `C:\Python311\python.exe`
+
+### 4. Start Using
+
+1. **Restart your AI assistant**
+2. **Start asking questions!**
+
+Try these example queries:
+> *"List my Breathe HR employees"*  
+> *"Show me pending leave requests"*  
+> *"Create a holiday request for employee 123"*  
+> *"Find employees in Engineering department"*
 
 ## What You Can Access
 
-### 👥 Employee Data
-- Employee lists with filtering by department, status
-- Individual employee profiles and details
-- Search employees by name, email, or attributes
-- Department and team information
+This MCP server provides **secure access** to your Breathe HR data:
 
-### 🏖️ Absence Management
-- View all absence/leave records
-- Filter by employee, dates, absence type
-- Create new leave requests
-- Check leave balances and history
+| **Data Type** | **What You Can Do** |
+|---------------|-------------------|
+| **👥 Employees** | List, search, view details, filter by department/status |
+| **🏖️ Absences** | View leave records, filter by dates/types, create requests |
+| **🏢 Company** | Access account information and settings |
+| **📋 Departments** | List organizational structure and teams |
 
-### 🏢 Company Information
-- Account details and settings
-- Department structures
-- Employee count and statistics
+**Available Tools:**
+- `list_employees` - Get paginated employee list with filters
+- `get_employee` - Get detailed employee information
+- `search_employees` - Search employees by query
+- `list_absences` - Get absence records with filtering
+- `create_leave_request` - Submit new leave requests
+- `get_employee_absences` - Get absences for specific employee
+- `get_account_info` - Get company account details
+- `get_departments` - List all departments
 
 ## Troubleshooting
 
-### "Authentication failed" Error
+### Common Issues
 
-**Check your API key:**
-1. Verify the key in your `.env` file matches your Breathe HR settings
-2. Make sure there are no extra spaces or quotes around the key
-3. Confirm your API key has the necessary permissions
+**"No module named 'breathe_hr_mcp'"**
+- **Using uv:** Make sure you're using the absolute directory path with `uv run --directory`
+- **Manual setup:** Verify Python can find the installed packages: `pip list | grep fastmcp`
 
-### "MCP server not found" in AI Assistant
+**"spawn uv ENOENT" or "command not found: uv"**
+- Install uv first: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Restart your terminal after installation
+- Verify installation: `uv --version`
 
-**Restart and check config:**
-1. Restart your AI assistant completely
-2. Verify the JSON config syntax is correct (no trailing commas)
-3. Check the file path points to the right location
-4. Make sure `uv` is installed and in your PATH
+**"spawn python ENOENT" (if not using uv)**
+- Switch to uv setup (recommended) or use full Python path in config
+- Check your Python path: `which python3`
+- Try different common paths: `/usr/bin/python3`, `/usr/local/bin/python3`, `/opt/homebrew/bin/python3`
 
-### "Rate limit exceeded" Error
+**"Authentication failed"**
+- Verify your Breathe HR API key is correct
+- Check the key has appropriate permissions in Breathe HR
+- Make sure there are no extra spaces or quotes around the key
 
-**Breathe HR has API limits:**
+**"Rate limit exceeded"**
+- Breathe HR has API rate limits
 - Wait a few minutes before trying again
 - Reduce the frequency of requests
-- Contact Breathe HR support if limits are too low
 
-### Testing Connection
+**MCP tools not showing in your AI assistant**
+- Restart your AI assistant after config changes
+- Check the config file syntax is valid JSON
+- Verify file paths are absolute, not relative
 
-```bash
-# Test the server directly
-cd breathehr-mcp
-uv run python -m breathe_hr_mcp
+### Getting Help
 
-# Validate your configuration
-uv run python scripts/validate-configs.py
+- **Issues & Bugs:** [GitHub Issues](https://github.com/fuzzylabs/breathehr-mcp/issues)
+- **Breathe HR API Docs:** [developers.breathehr.com](https://developers.breathehr.com)
+- **MCP Protocol:** [modelcontextprotocol.io](https://modelcontextprotocol.io)
 
-# Check available tools
-uv run python scripts/print_mcp_routes.py
-```
+---
 
-## Render Deployment
+## Render Deployment (Secure Remote HTTP Access)
 
-Want to run this in the cloud? Deploy to Render in one click:
+Want to deploy the MCP server remotely so multiple users can access it via HTTP? Deploy to Render for easy cloud hosting with API key authentication.
+
+### Quick Deploy
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/fuzzylabs/breathehr-mcp)
 
-**Environment variables to set:**
-- `BREATHE_HR_API_KEY`: Your Breathe HR API key
-- `MCP_API_KEY`: (Optional) Secure key for API access
+### Manual Deployment
 
-Then configure your AI assistant to use the deployed URL:
+1. **Fork this repository** to your GitHub account
 
+2. **Create a Render account** at [render.com](https://render.com)
+
+3. **Create a new Web Service** and connect your GitHub fork
+
+4. **Configure the service:**
+   - **Build Command:** `pip install uv && uv sync`
+   - **Start Command:** `uv run uvicorn breathe_hr_mcp:app --host 0.0.0.0 --port $PORT`
+   - **Plan:** Free (or choose a paid plan for better performance)
+
+5. **Set environment variables** in Render dashboard:
+   - `BREATHE_HR_API_KEY`: Your Breathe HR API key
+   - `MCP_API_KEY`: A secure random API key for authentication (see generation instructions below)
+
+6. **Deploy** - Render will automatically build and deploy your service
+
+### Generating a Secure API Key
+
+Generate a secure random API key for the `MCP_API_KEY` environment variable:
+
+```bash
+# Using Python
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Using OpenSSL  
+openssl rand -base64 32
+
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+⚠️ **Important**: Store this API key securely - you'll need it to configure your MCP clients.
+
+### Using Your Deployed Server
+
+Once deployed, you'll get a URL like `https://your-service.onrender.com`. Configure your MCP clients to use:
+
+**Claude Desktop:**
 ```json
 {
   "mcpServers": {
     "breathe-hr": {
-      "url": "https://your-app.onrender.com",
-      "headers": {
-        "Authorization": "Bearer your_mcp_api_key"
-      }
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "https://your-service.onrender.com/mcp/",
+        "-H", "Content-Type: application/json",
+        "-H", "Authorization: Bearer YOUR_MCP_API_KEY_HERE",
+        "-d", "@-"
+      ]
     }
   }
 }
 ```
+
+Replace `YOUR_MCP_API_KEY_HERE` with the API key you generated and set in Render.
+
+🔒 **Security Note**: The API key authentication is only enforced when the `MCP_API_KEY` environment variable is set. If no API key is configured, the server will accept unauthenticated requests (useful for local development).
+
+**Direct HTTP Access:**
+```bash
+# List available tools
+curl -X POST https://your-service.onrender.com/mcp/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_MCP_API_KEY_HERE" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}'
+
+# List employees
+curl -X POST https://your-service.onrender.com/mcp/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_MCP_API_KEY_HERE" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "list_employees",
+      "arguments": {"page": 1, "per_page": 10}
+    },
+    "id": 1
+  }'
+```
+
+**⚠️ Note on Free Tier:** Render's free tier spins down services after inactivity. First requests may take 30-60 seconds to wake up the service.
+
+---
 
 ## For Developers
 
 ### Development Setup
 
+**Environment Variables (for development):**
 ```bash
-# Clone and install with dev dependencies
-git clone https://github.com/fuzzylabs/breathehr-mcp.git
-cd breathehr-mcp
-uv sync
+cp .env.example .env
+# Edit .env and set BREATHE_HR_API_KEY=your_api_key_here
+```
 
-# Run tests
+**Run Tests:**
+```bash
 uv run pytest
+```
 
-# Run with auto-reload
+**HTTP Server (for testing):**
+```bash
 uv run uvicorn breathe_hr_mcp:app --reload
-
-# Format code
-uv run black .
-uv run isort .
+# Server available at http://localhost:8000/mcp/
 ```
 
-### Available Tools
+### API Testing
 
-| Tool | Description |
-|------|-------------|
-| `list_employees` | Get paginated employee list with filters |
-| `get_employee` | Get detailed employee information |
-| `search_employees` | Search employees by query |
-| `list_absences` | Get absence records with filtering |
-| `create_leave_request` | Submit new leave requests |
-| `get_employee_absences` | Get absences for specific employee |
-| `get_account_info` | Get company account details |
-| `get_departments` | List all departments |
-
-### Testing
-
-The project includes comprehensive tests:
-
+Test the schema endpoint:
 ```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=breathe_hr_mcp
-
-# Run specific test file
-uv run pytest tests/test_server.py
+curl -X POST http://localhost:8000/mcp/ \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 1
+  }'
 ```
 
-### Contributing
+Test listing employees:
+```bash
+curl -X POST http://localhost:8000/mcp/ \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "list_employees",
+      "arguments": {"page": 1, "per_page": 10}
+    },
+    "id": 1
+  }'
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Run the test suite
-5. Submit a pull request
+### Architecture
 
----
-
-**License**: MIT  
-**Author**: [Fuzzy Labs](https://fuzzylabs.ai)  
-**Issues**: [GitHub Issues](https://github.com/fuzzylabs/breathehr-mcp/issues)
+- **Server:** FastMCP framework with FastAPI backend
+- **Protocol:** Model Context Protocol (MCP) via stdio
+- **API:** Breathe HR API v1 with secure access
+- **Authentication:** Bearer token (API key)
