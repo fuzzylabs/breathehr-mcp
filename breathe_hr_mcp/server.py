@@ -18,7 +18,8 @@ load_dotenv()
 
 # Configuration
 BREATHE_HR_API_KEY = os.getenv("BREATHE_HR_API_KEY")
-BREATHE_HR_BASE_URL = os.getenv("BREATHE_HR_BASE_URL", "https://api.breathehr.com/v1")
+# BREATHE_HR_BASE_URL = os.getenv("BREATHE_HR_BASE_URL", "https://api.breathehr.com/v1")
+BREATHE_HR_BASE_URL = os.getenv("BREATHE_HR_BASE_URL", "https://api.sandbox.breathehr.info/v1")
 MCP_API_KEY = os.getenv("MCP_API_KEY")
 
 # Security
@@ -47,10 +48,7 @@ async def authenticate_request(request):
 
 # Initialize MCP server
 mcp = FastMCP(
-    name="Breathe HR MCP",
-    auth=None,
-    json_response=True,
-    stateless_http=True,
+    name="Breathe HR MCP"
 )
 
 async def breathe_hr_request(
@@ -65,9 +63,9 @@ async def breathe_hr_request(
     
     url = f"{BREATHE_HR_BASE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
     headers = {
-        "Authorization": f"Bearer {BREATHE_HR_API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+        "X-API-KEY": f"{BREATHE_HR_API_KEY}",
+        # "Content-Type": "application/json",
+        # "Accept": "application/json"
     }
     
     async with httpx.AsyncClient() as client:
@@ -217,45 +215,45 @@ async def list_absences(
     
     return await breathe_hr_request("absences", params=params)
 
-@mcp.tool
-async def create_leave_request(
-    employee_id: int,
-    start_date: str,
-    end_date: str,
-    absence_type: str,
-    reason: Optional[str] = None,
-    half_day: bool = False,
-    half_day_period: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Create a new leave/absence request in Breathe HR
-    
-    Args:
-        employee_id: The ID of the employee requesting leave
-        start_date: Start date of the absence (YYYY-MM-DD)
-        end_date: End date of the absence (YYYY-MM-DD)
-        absence_type: Type of absence (holiday, sick, personal, etc.)
-        reason: Optional reason for the absence
-        half_day: Whether this is a half-day absence
-        half_day_period: If half_day, specify 'morning' or 'afternoon'
-    
-    Returns:
-        Dict containing the created absence request details
-    """
-    data = {
-        "employee_id": employee_id,
-        "start_date": start_date,
-        "end_date": end_date,
-        "type": absence_type,
-        "half_day": half_day
-    }
-    
-    if reason:
-        data["reason"] = reason
-    if half_day and half_day_period:
-        data["half_day_period"] = half_day_period
-    
-    return await breathe_hr_request("absences", method="POST", json_data=data)
+# @mcp.tool
+# async def create_leave_request(
+#     employee_id: int,
+#     start_date: str,
+#     end_date: str,
+#     absence_type: str,
+#     reason: Optional[str] = None,
+#     half_day: bool = False,
+#     half_day_period: Optional[str] = None
+# ) -> Dict[str, Any]:
+#     """
+#     Create a new leave/absence request in Breathe HR
+#
+#     Args:
+#         employee_id: The ID of the employee requesting leave
+#         start_date: Start date of the absence (YYYY-MM-DD)
+#         end_date: End date of the absence (YYYY-MM-DD)
+#         absence_type: Type of absence (holiday, sick, personal, etc.)
+#         reason: Optional reason for the absence
+#         half_day: Whether this is a half-day absence
+#         half_day_period: If half_day, specify 'morning' or 'afternoon'
+#
+#     Returns:
+#         Dict containing the created absence request details
+#     """
+#     data = {
+#         "employee_id": employee_id,
+#         "start_date": start_date,
+#         "end_date": end_date,
+#         "type": absence_type,
+#         "half_day": half_day
+#     }
+#
+#     if reason:
+#         data["reason"] = reason
+#     if half_day and half_day_period:
+#         data["half_day_period"] = half_day_period
+#
+#     return await breathe_hr_request("absences", method="POST", json_data=data)
 
 @mcp.tool
 async def get_account_info() -> Dict[str, Any]:
@@ -303,6 +301,93 @@ async def get_departments() -> Dict[str, Any]:
     """
     return await breathe_hr_request("departments")
 
+@mcp.tool
+async def count_employees_on_date(date: str) -> Dict[str, Any]:
+    """
+    Count the number of employees who were employed on a specific date
+    
+    Args:
+        date: Date in YYYY-MM-DD format to check employment count for
+    
+    Returns:
+        Dict containing the count and breakdown of employees on that date
+    """
+    from datetime import datetime
+    
+    try:
+        # Parse the input date
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise RuntimeError(f"Invalid date format. Please use YYYY-MM-DD format, got: {date}")
+    
+    # Get all employees with pagination
+    all_employees = []
+    page = 1
+    per_page = 100
+    
+    while True:
+        response = await breathe_hr_request("employees", params={
+            "page": page,
+            "per_page": per_page
+        })
+        
+        employees = response.get("data", [])
+        if not employees:
+            break
+            
+        all_employees.extend(employees)
+        
+        # Check if there are more pages
+        if len(employees) < per_page:
+            break
+        page += 1
+    
+    # Count employees who were employed on the target date
+    employed_count = 0
+    employed_employees = []
+    
+    for employee in all_employees:
+        join_date_str = employee.get("join_date")
+        leaving_date_str = employee.get("leaving_date")
+        
+        if not join_date_str:
+            continue
+            
+        try:
+            join_date = datetime.strptime(join_date_str, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+            
+        # Check if employee had joined by the target date
+        if join_date > target_date:
+            continue
+            
+        # Check if employee had not left by the target date (or never left)
+        if leaving_date_str:
+            try:
+                leaving_date = datetime.strptime(leaving_date_str, "%Y-%m-%d").date()
+                if leaving_date <= target_date:
+                    continue
+            except (ValueError, TypeError):
+                # If leaving_date is invalid, treat as still employed
+                pass
+        
+        # Employee was employed on target date
+        employed_count += 1
+        employed_employees.append({
+            "id": employee.get("id"),
+            "name": employee.get("name", "Unknown"),
+            "join_date": join_date_str,
+            "leaving_date": leaving_date_str
+        })
+    
+    return {
+        "date": date,
+        "employee_count": employed_count,
+        "total_employees_checked": len(all_employees),
+        "employed_employees": employed_employees
+    }
+
 def create_app():
     """Create FastAPI app with MCP integration"""
     # Get the MCP HTTP app
@@ -323,11 +408,6 @@ def create_app():
     # Mount the MCP app
     app.mount("/mcp", mcp_app)
     
-    # Add redirect for /mcp
-    @app.api_route("/mcp", methods=["GET", "POST"])
-    async def mcp_redirect():
-        return RedirectResponse(url="/mcp/", status_code=307)
-    
     # Add health check endpoint
     @app.get("/")
     async def health_check():
@@ -339,5 +419,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    mcp.run()
