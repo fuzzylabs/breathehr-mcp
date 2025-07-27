@@ -4,7 +4,8 @@
       "command": "uv",
       "args": ["run", "python", "-m", "breathe_hr_mcp"],
       "env": {
-        "BREATHE_HR_API_KEY": "your_breathe_hr_api_key_here"
+        "BREATHE_HR_API_KEY": "your_breathe_hr_api_key_here",
+        "USE_SANDBOX_URL": false
       }
     }
   }
