@@ -18,7 +18,11 @@ load_dotenv()
 
 # Configuration
 BREATHE_HR_API_KEY = os.getenv("BREATHE_HR_API_KEY")
-BREATHE_HR_BASE_URL = os.getenv("BREATHE_HR_BASE_URL", "https://api.breathehr.com/v1")
+use_sandbox = os.getenv("USE_SANDBOX_URL")
+if use_sandbox:
+    BREATHE_HR_BASE_URL = "https://api.sandbox.breathehr.info/v1"
+else:
+    BREATHE_HR_BASE_URL = os.getenv("BREATHE_HR_BASE_URL", "https://api.breathehr.com/v1")
 MCP_API_KEY = os.getenv("MCP_API_KEY")
 
 # Security
@@ -48,9 +52,6 @@ async def authenticate_request(request):
 # Initialize MCP server
 mcp = FastMCP(
     name="Breathe HR MCP",
-    auth=None,
-    json_response=True,
-    stateless_http=True,
 )
 
 async def breathe_hr_request(
@@ -65,7 +66,7 @@ async def breathe_hr_request(
     
     url = f"{BREATHE_HR_BASE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
     headers = {
-        "Authorization": f"Bearer {BREATHE_HR_API_KEY}",
+        "X-API-KEY": f"{BREATHE_HR_API_KEY}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
@@ -323,21 +324,15 @@ def create_app():
     # Mount the MCP app
     app.mount("/mcp", mcp_app)
     
-    # Add redirect for /mcp
-    @app.api_route("/mcp", methods=["GET", "POST"])
-    async def mcp_redirect():
-        return RedirectResponse(url="/mcp/", status_code=307)
-    
     # Add health check endpoint
     @app.get("/")
     async def health_check():
         return {"status": "ok", "service": "Breathe HR MCP Server"}
-    
     return app
 
 # Create the app
 app = create_app()
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    mcp.run()
+
